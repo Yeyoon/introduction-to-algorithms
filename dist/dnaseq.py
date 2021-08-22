@@ -42,7 +42,6 @@ def hash_func1(seq):
 def subsequenceHashes(seq, k):
     base_seq = ''
     tmp = []
-    print("seq,k -> ",seq,k)
     for i in range(k):
         try:
             tmp.append(next(seq))
@@ -52,7 +51,6 @@ def subsequenceHashes(seq, k):
     base_seq = ''.join(tmp)
 
     h = RollingHash(base_seq)
-    print("first yield :",base_seq)
     yield (base_seq,h.current_hash(),0)
 
     i = 0
@@ -63,7 +61,6 @@ def subsequenceHashes(seq, k):
         tmp.append(c)
         base_seq = ''.join(tmp)
         i += 1
-        print("i is ",i,base_seq)
         yield (base_seq,h.slide(previtm,nextitm),i)
 
 
@@ -72,7 +69,28 @@ def subsequenceHashes(seq, k):
 # every m nucleotides.  (This will be useful when you try to use two
 # whole data files.)
 def intervalSubsequenceHashes(seq, k, m):
-    raise Exception("Not implemented!")
+    start = 0
+    needStop = False
+    while not needStop:
+        base_seq = ''
+        tmp = []
+        for i in range(k):
+            try:
+                tmp.append(next(seq))
+            except StopIteration:
+                return []
+        
+        base_seq = ''.join(tmp)
+        for i in range(m-k):
+            try:
+                next(seq)
+            except StopIteration:
+                needStop = True
+                break
+        
+        h = RollingHash(base_seq)
+        yield (base_seq,h.current_hash(),start)
+        start = start + m
 
 # Searches for commonalities between sequences a and b by comparing
 # subsequences of length k.  The sequences a and b should be iterators
@@ -80,14 +98,20 @@ def intervalSubsequenceHashes(seq, k, m):
 # every m nucleotides (for m >= k).
 def getExactSubmatches(a, b, k, m):
     mh = Multidict()
-    for s in subsequenceHashes(a,k):
-        mh.put(s[1],s)
-
+    if m >= k:
+        for s in intervalSubsequenceHashes(a,k,m):
+            mh.put(s[1],s)
+    else:
+        for s in subsequenceHashes(a,k):
+            mh.put(s[1],s)
+            
     for s in subsequenceHashes(b,k):
         values = mh.get(s[1])
         for v in values:
             if v[0] == s[0]:
                 yield (v[2],s[2])
+
+
                 
 
 if __name__ == '__main__':

@@ -29,6 +29,17 @@ class FastaSequence:
         self.buf = self.buf[1:]
         self.pos += 1
         return nextchar
+    def __next__(self):
+        while '' == self.buf:
+            self.buf = self.f.readline()
+            if '' == self.buf:
+                self.f.close()
+                raise StopIteration
+            self.buf = self.buf.strip()
+        nextchar = self.buf[0]
+        self.buf = self.buf[1:]
+        self.pos += 1
+        return nextchar
 
 def getSequenceLength(filename):
     seq = FastaSequence(filename)
